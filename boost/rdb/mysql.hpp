@@ -17,6 +17,7 @@ extern mysql_select_statement_type select;
 using sql::max;
 using sql::sum;
 using sql::count;
+using sql::floor;
 
 using sql::alias;
 using sql::exprs;

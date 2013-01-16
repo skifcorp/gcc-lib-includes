@@ -67,13 +67,13 @@ namespace tools {
 
         template <class Vector>
         struct as_vvector2 {
-            using type = typename detail::to_fusion_vector <
-                            typename fusion::result_of::accumulate <
+		    using null_vector = typename fusion::result_of::accumulate <
                                 Vector,
                                 detail::null_vector<>,
                                 push_back_to_null_vector
-                            >::type
-                         >::type;
+                            >::type;
+
+            using type = typename detail::to_fusion_vector <null_vector>::type;
         };
     }
 

@@ -26,15 +26,21 @@ using std::unique_ptr;
 #include <boost/rdb/sql/table.hpp>
 
 #include <boost/fusion/include/make_vector.hpp>
-#include <boost/fusion/include/at.hpp>
+#include <boost/fusion/include/at_c.hpp>
 #include <boost/fusion/include/accumulate.hpp>
 #include <boost/fusion/include/push_back.hpp>
 #include <boost/fusion/include/zip_view.hpp>
-#include <boost/fusion/include/find_if.hpp>
-#include <boost/fusion/include/find.hpp>
 #include <boost/fusion/include/begin.hpp>
 #include <boost/fusion/include/end.hpp>
 #include <boost/fusion/include/size.hpp>
+#include <boost/fusion/include/pair.hpp>
+#include <boost/fusion/include/iter_fold.hpp>
+#include <boost/fusion/include/for_each.hpp>
+
+
+#include <boost/mpl/bool.hpp>
+#include <boost/mpl/equal_to.hpp>
+#include <boost/mpl/int.hpp>
 
 #include <boost/lexical_cast.hpp>
 
@@ -62,10 +68,12 @@ namespace boost { namespace rdb {
 
 namespace boost { namespace rdb { namespace mysql {
 
-    using connection_typ = unique_ptr< ::sql::Connection >;
-    using statement_typ  = unique_ptr< ::sql::Statement >;
+    using connection_typ         = unique_ptr< ::sql::Connection >;
+    using statement_typ          = unique_ptr< ::sql::Statement >;
     using prepared_statement_typ = unique_ptr< ::sql::PreparedStatement >;
     using result_set_typ         = unique_ptr< ::sql::ResultSet >;
+
+    namespace mpl                    = boost::mpl;
 
   template <class T>
   struct alias_expr
@@ -89,6 +97,53 @@ namespace boost { namespace rdb { namespace mysql {
       static constexpr bool found = !boost::is_same< found_type, typename fusion::result_of::end<ExprList>::type >::value;
   };
 
+    template <int CurPos, int SearchPos, class OldV, class NewV, class NewVal >
+    OldV nullable_replace_imp( const OldV & , const NewV& new_seq, const NewVal&, mpl::bool_<true> )
+    {
+        //static_name_of < mpl::int_<CurPos> > asas;
+        return new_seq;
+    }
+
+    template <class Seq, class OldVal, class NewVal>
+    //typename fusion::result_of::push_back<Seq, OldVal>::type
+    auto pusher_to_vector( const Seq& seq, const OldVal& old_val, const NewVal& , mpl::bool_<false> )
+        -> decltype(fusion::push_back( seq, old_val ))
+    {
+        return fusion::push_back( seq, old_val );
+    }
+
+    template <class Seq, class OldVal, class NewVal>
+    //typename fusion::result_of::push_back<Seq, NewVal>::type
+    auto pusher_to_vector( const Seq& seq, const OldVal& , const NewVal& new_val, mpl::bool_<true> )
+        -> decltype(fusion::push_back( seq, new_val ))
+    {
+        return fusion::push_back( seq, new_val );
+    }
+
+
+    template <int CurPos, int SearchPos, class OldV, class NewV, class NewVal >
+    OldV nullable_replace_imp( const OldV & old_seq, const NewV& new_seq, const NewVal& new_val, mpl::bool_<false>  )
+    {        
+        using tt = typename mpl::equal_to<mpl::int_<CurPos>, typename fusion::result_of::size<OldV>::type >::type;
+        using found = typename mpl::equal_to< mpl::int_<CurPos>, mpl::int_<SearchPos> >::type;
+
+        auto vv = pusher_to_vector( new_seq, fusion::at_c<CurPos>(old_seq), new_val,  found());
+
+        return nullable_replace_imp<CurPos + 1, SearchPos>(old_seq, vv, new_val, tt() );
+    }
+
+
+
+
+    template <int Pos, class V, class NewVal>
+    V nullable_replace( const V & seq, const NewVal& new_val )
+    {
+        //static_name_of<  mpl::int_<Pos> > aaa;
+
+        return nullable_replace_imp<0, Pos>( seq, fusion::vector<>(), new_val,
+                                             typename mpl::equal_to< mpl::int_<Pos>, typename fusion::result_of::size<V>::type >::type() );
+
+    }
 
 
   template<class Seq, class ExprList>
@@ -113,12 +168,48 @@ namespace boost { namespace rdb { namespace mysql {
     nullable& operator =(const Seq& values) { values_ = values; return *this; }
 
     template <class Expr>
-    typename fusion::result_of::at<const Seq, typename expr_pos<ExprList, Expr>::type >::type value( const Expr& ) const
+    typename std::add_const <
+        typename std::add_lvalue_reference <
+            typename fusion::result_of::at<
+                const Seq,
+                typename expr_pos<ExprList, Expr>::type
+            >::type
+        >::type
+    >::type operator[]( const Expr& ) const
     {
         static_assert(expr_pos<ExprList, Expr>::found, "Cant find column in result!");
 
         return fusion::at< typename expr_pos<ExprList, Expr>::type >( values_ );
     } 
+
+    template <int Num, class NewValue>
+    struct Replacer
+    {
+        const NewValue& new_val;
+        Replacer( const NewValue& nv ) : new_val(nv){}
+        mutable int counter = 0;
+
+        template <class T>
+        void operator()(T& ) const
+        {
+            ++counter;
+        }
+
+        void operator()( NewValue& nv ) const
+        {
+            if ( counter == Num )
+                nv = new_val;
+            ++counter;
+        }
+    };
+
+
+    template <class Expr, class NewValue>
+    void replace(const Expr&, const NewValue& nv)
+    {
+        //values_ = nullable_replace<  expr_pos<ExprList, Expr>::type::value >( values_,  nv );
+        fusion::for_each( values_, Replacer< expr_pos<ExprList, Expr>::type::value, NewValue >(nv) );
+    }
 
     template <int N>
     using type_of_c = fusion::result_of::at_c<Seq, N>;

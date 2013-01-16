@@ -245,6 +245,17 @@ sql_function_count<Expr...> count(Expr ... e)
     return sql_function_count<Expr...>(e...);
 }
 
+
+
+template <class ... Expr>
+using sql_function_floor = expression< sql_function<_S("floor"), typename detect_numeric_type<Expr ...>::type, Expr...> >;
+
+template <class ... Expr>
+sql_function_floor<Expr...> floor(Expr ... e)
+{
+    return sql_function_floor<Expr...>(e...);
+}
+
 #undef _S
 
 }}}
