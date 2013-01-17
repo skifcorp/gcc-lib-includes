@@ -256,6 +256,16 @@ sql_function_floor<Expr...> floor(Expr ... e)
     return sql_function_floor<Expr...>(e...);
 }
 
+template <class ... Expr>
+using sql_function_avg = expression< sql_function<_S("avg"), typename detect_numeric_type<Expr ...>::type, Expr...> >;
+
+template <class ... Expr>
+sql_function_avg<Expr...> avg(Expr ... e)
+{
+    return sql_function_avg<Expr...>(e...);
+}
+
+
 #undef _S
 
 }}}

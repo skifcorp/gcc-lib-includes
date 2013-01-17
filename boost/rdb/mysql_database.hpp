@@ -168,48 +168,33 @@ namespace boost { namespace rdb { namespace mysql {
     nullable& operator =(const Seq& values) { values_ = values; return *this; }
 
     template <class Expr>
-    typename std::add_const <
-        typename std::add_lvalue_reference <
+    typename fusion::result_of::at<
+        const Seq,
+        typename expr_pos<ExprList, Expr>::type
+    >::type
+    operator[]( const Expr& ) const
+    {
+        static_assert(expr_pos<ExprList, Expr>::found, "Cant find column in result!");
+
+        return fusion::at< typename expr_pos<ExprList, Expr>::type >( values_ );
+    }
+
+    template <class Expr>
+    typename std::remove_const <
+        typename std::remove_reference <
             typename fusion::result_of::at<
                 const Seq,
                 typename expr_pos<ExprList, Expr>::type
             >::type
         >::type
-    >::type operator[]( const Expr& ) const
+    >::type &
+    operator[]( const Expr& )
     {
         static_assert(expr_pos<ExprList, Expr>::found, "Cant find column in result!");
-
-        return fusion::at< typename expr_pos<ExprList, Expr>::type >( values_ );
-    } 
-
-    template <int Num, class NewValue>
-    struct Replacer
-    {
-        const NewValue& new_val;
-        Replacer( const NewValue& nv ) : new_val(nv){}
-        mutable int counter = 0;
-
-        template <class T>
-        void operator()(T& ) const
-        {
-            ++counter;
-        }
-
-        void operator()( NewValue& nv ) const
-        {
-            if ( counter == Num )
-                nv = new_val;
-            ++counter;
-        }
-    };
-
-
-    template <class Expr, class NewValue>
-    void replace(const Expr&, const NewValue& nv)
-    {
-        //values_ = nullable_replace<  expr_pos<ExprList, Expr>::type::value >( values_,  nv );
-        fusion::for_each( values_, Replacer< expr_pos<ExprList, Expr>::type::value, NewValue >(nv) );
+        return  fusion::at< typename expr_pos<ExprList, Expr>::type >( values_ );
     }
+
+
 
     template <int N>
     using type_of_c = fusion::result_of::at_c<Seq, N>;

@@ -18,6 +18,7 @@ using sql::max;
 using sql::sum;
 using sql::count;
 using sql::floor;
+using sql::avg;
 
 using sql::alias;
 using sql::exprs;
