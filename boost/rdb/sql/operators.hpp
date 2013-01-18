@@ -122,6 +122,49 @@ namespace boost { namespace rdb { namespace sql {
     return expression< not_<Expr> >(expr);
   }
 
+
+  template<class Expr>
+  struct unary_minus {
+
+    unary_minus(const Expr& expr) : expr_(expr) { }
+
+    typedef typename Expr::rdb_type rdb_type;
+
+    typedef typename Expr::placeholder_vector placeholder_vector;
+
+    placeholder_vector placeholders() const {
+      return expr_.placeholders();
+    }
+
+    BOOST_STATIC_CONSTANT(int, precedence = precedence_level::logical_not);
+
+    void str(std::ostream& os) const {
+      this->write(os, boost::mpl::bool_<precedence_of<Expr>::value < precedence>());
+    }
+
+    void write(std::ostream& os, boost::mpl::true_) const {
+      os << "- (";
+      expr_.str(os);
+      os << ")";
+    }
+
+    void write(std::ostream& os, boost::mpl::false_) const {
+      os << "- ";
+      expr_.str(os);
+    }
+
+    Expr expr_;
+  };
+
+
+  template<class Expr>
+  BOOST_CONCEPT_REQUIRES(
+    ((ComparableExpression<Expr>)),
+    (expression< unary_minus<Expr> >))
+  operator -(const expression<Expr>& expr) {
+    return expression< unary_minus<Expr> >(expr);
+  }
+
   namespace detail {
     template<class Expr>
     struct test_null : binary_operation<Expr, null_expr, precedence_level::compare> {

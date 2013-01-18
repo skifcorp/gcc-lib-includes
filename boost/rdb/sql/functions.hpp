@@ -139,11 +139,17 @@ public:
 
     static const auto precedence = precedence_level::highest;
 
+
+    /*sql_function(int a = 0)
+    {
+
+    }*/
+
+
     sql_function(Args... a) : args(a...)
     {
 
     }
-
     sql_function& operator= (const sql_function& other)
     {
         args = other.args; return *this;

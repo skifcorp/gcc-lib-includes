@@ -27,7 +27,8 @@ struct mysql :  sql2003
     struct inner_join;
     struct on;
     struct group_by;
-    struct select_all;
+    struct order_by;
+    struct select_all;    
 };
 
 template <class State, class New>
@@ -260,6 +261,26 @@ struct select_statement<mysql, State, Data, Subdialect> : public select_statemen
                 >::type( ct::add_key<mysql::group_by>(this->data_, c) );
     }
 
+    template <class Column>
+    auto order_by ( const Column& c ) -> decltype(typename inherited::template transition <
+                                                mysql::order_by, Column
+                                                >::type( ct::add_key<mysql::order_by>(this->data_, c) ))
+    {
+        return typename inherited::template transition <
+                mysql::order_by, Column
+                >::type( ct::add_key<mysql::order_by>(this->data_, c) );
+    }
+
+    template <class T>
+    auto limit ( const T& n ) -> decltype(typename inherited::template transition <
+                                                mysql::limit, T
+                                                >::type( ct::add_key<mysql::limit>(this->data_, n) ))
+    {
+        return typename inherited::template transition <
+                mysql::limit, T
+                >::type( ct::add_key<mysql::limit>(this->data_, n) );
+    }
+
 /*    typename inherited::template transition<typename Subdialect::select_all, fusion::vector<select_all_placeholder>>::type
     operator()()
     {
@@ -326,9 +347,13 @@ struct select_statement<mysql, State, Data, Subdialect> : public select_statemen
 
 BOOST_RDB_ALLOW(mysql, mysql::as, mysql::from);
 BOOST_RDB_ALLOW(mysql, mysql::from, mysql::inner_join);
+BOOST_RDB_ALLOW(mysql, mysql::from, mysql::order_by);
+BOOST_RDB_ALLOW(mysql, mysql::from, mysql::group_by);
 BOOST_RDB_ALLOW(mysql, mysql::inner_join, mysql::on);
 BOOST_RDB_ALLOW(mysql, mysql::on, mysql::where);
 BOOST_RDB_ALLOW(mysql, mysql::select_all, mysql::from);
+BOOST_RDB_ALLOW(mysql, mysql::from, mysql::limit);
+BOOST_RDB_ALLOW(mysql, mysql::where, mysql::limit);
 
 template <class T>
 inline void str(std::ostream& os, const ct::map_entry<mysql::as, T>& p) {
@@ -354,6 +379,18 @@ inline void str(std::ostream& os, const ct::map_entry<mysql::group_by, T>& p) {
    os << " group by ";
    p.value.str(os);
  }
+
+
+template <class T>
+inline void str(std::ostream& os, const ct::map_entry<mysql::order_by, T>& p) {
+   os << " order by ";
+   p.value.str(os);
+ }
+
+// tell how to print the clause
+inline void str(std::ostream& os, const ct::map_entry<mysql::limit, int>& p) {
+  os << " limit " << p.value;
+}
 
 using mysql_select_statement_type = select_statement<mysql, mysql::select, ct::map0, mysql>;
 

@@ -998,10 +998,10 @@ namespace boost { namespace rdb { namespace mysql {
 
     typedef typename Container::value_type value_type;
 
-    result_set() : exprs_(ExprList())
+    /*result_set() : exprs_(ExprList())
     {
 
-    }
+    }*/
 
     result_set(statement_typ && stmt, const ExprList& exprs)
         : stmt_( std::move(stmt) ),
