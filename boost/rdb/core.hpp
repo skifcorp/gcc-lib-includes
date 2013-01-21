@@ -195,6 +195,13 @@ namespace boost { namespace rdb { namespace core {
     typedef literal<long, integer> type;
     static type value(long val) { return type(val); }
   };
+
+  template<>
+  struct make_literal<boolean, bool> {
+    typedef literal<bool, boolean> type;
+    static type value(bool val) { return type(val); }
+  };
+
   
   template<>
   struct make_literal<integer, int> : make_literal<integer, long> { };

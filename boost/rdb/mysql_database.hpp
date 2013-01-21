@@ -641,7 +641,8 @@ namespace boost { namespace rdb { namespace mysql {
       typedef typename Stat::result execute_return_type;
 
       static execute_return_type execute(mysql_database& db, const Stat& stat) {
-        return db.exec_str(as_string(stat));
+          statement_typ stmt;
+          return db.exec_str(stmt, as_string(stat));
       }
 
       typedef prepared_statement<Stat> prepare_return_type;
