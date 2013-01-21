@@ -272,6 +272,15 @@ sql_function_avg<Expr...> avg(Expr ... e)
 }
 
 
+template <class ... Expr>
+using sql_function_greatest = expression< sql_function<_S("greatest"), typename detect_numeric_type<Expr ...>::type, Expr...> >;
+
+template <class ... Expr>
+sql_function_greatest<Expr...> greatest(Expr ... e)
+{
+    return sql_function_greatest<Expr...>(e...);
+}
+
 #undef _S
 
 }}}
