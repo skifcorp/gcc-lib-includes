@@ -5,6 +5,7 @@
 #include <boost/rdb/sql.hpp>
 #include <boost/rdb/mysql/select.hpp>
 #include <boost/rdb/sql/update.hpp>
+#include <boost/rdb/sql/insert.hpp>
 
 namespace boost { namespace rdb { namespace mysql {
 
@@ -16,8 +17,10 @@ using mysql_select_statement_type = sql::mysql_select_statement_type;
 extern mysql_select_statement_type select;
 
 using sql::update;
+using sql::insert_into;
 
 using sql::max;
+using sql::min;
 using sql::sum;
 using sql::count;
 using sql::floor;
