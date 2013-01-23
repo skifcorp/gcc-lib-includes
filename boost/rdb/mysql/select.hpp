@@ -8,8 +8,10 @@
 #include <boost/mpl/replace_if.hpp>
 
 #include <boost/fusion/include/for_each.hpp>
-#include <boost/fusion/include/invoke.hpp>
 #include <boost/fusion/include/transform.hpp>
+#include <boost/fusion/include/join.hpp>
+#include <fusion_tools/multy_join.h>
+
 
 #include <type_traits>
 
@@ -281,18 +283,6 @@ struct select_statement<mysql, State, Data, Subdialect> : public select_statemen
                 >::type( ct::add_key<mysql::limit>(this->data_, n) );
     }
 
-/*    typename inherited::template transition<typename Subdialect::select_all, fusion::vector<select_all_placeholder>>::type
-    operator()()
-    {
-        return typename inherited::template
-                transition<
-                        typename Subdialect::select_all,
-                        fusion::vector<select_all_placeholder>
-                >::type( ct::map<
-                            typename Subdialect::select_all,
-                            fusion::vector<select_all_placeholder>
-                         >(fusion::vector<select_all_placeholder>(select_all_placeholder())) );
-    } */
 
     template <class ... VectorArgs>
     typename inherited::template transition<
@@ -304,7 +294,7 @@ struct select_statement<mysql, State, Data, Subdialect> : public select_statemen
                 >::type
             >::type ...
         >
-    >::type operator () (const fusion::vector<VectorArgs...>& columns)
+    >::type operator () (const fusion::vector<VectorArgs ...>& columns)
     {
         return
             typename inherited::template transition<
@@ -329,20 +319,17 @@ struct select_statement<mysql, State, Data, Subdialect> : public select_statemen
                     >( boost::fusion::transform(columns, deref_pointer() ) ) );
     }
 
-#if 0
-    template <class ... VectorArgs>
-    typename fusion::result_of::invoke<
-            select_invoker<Self>,
-            fusion::vector<VectorArgs...>
-    >::type
-    operator () (const fusion::vector<VectorArgs...>& columns)
+    template <class ... Args>
+    auto operator() ( const Args&... args  )->decltype( operator()( tools::multy_join( args... ) ) )
     {
-        return fusion::invoke( select_invoker<Self>(*this), columns );
+        static_name_of<Args ...> aaa;
+
+        return operator()( tools::multy_join( args... ) );
     }
-#endif
 
 
-    using inherited::operator();
+
+    //using inherited::operator();
 };
 
 BOOST_RDB_ALLOW(mysql, mysql::as, mysql::from);

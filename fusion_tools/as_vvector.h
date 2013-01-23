@@ -3,6 +3,8 @@
 
 #include <boost/fusion/include/vector.hpp>
 #include <boost/fusion/include/invoke.hpp>
+#include <boost/fusion/include/accumulate.hpp>
+
 #include <type_traits>
 
 namespace tools {
@@ -61,7 +63,7 @@ namespace tools {
 
             template <class Self, class ... Args, class NewArg>
             struct result<Self(const detail::null_vector<Args ...>&, NewArg)> {
-                using type = detail::null_vector<Args ... , NewArg>;
+                using type = detail::null_vector<Args ... , typename std::remove_reference<NewArg>::type >;
             };
         };
 

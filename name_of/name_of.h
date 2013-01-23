@@ -9,7 +9,7 @@
 #include <typeinfo>
 #include <memory>
 
-template <class T> 
+template <class T>
 struct name_of
 {
     static std::string value()
@@ -20,7 +20,7 @@ struct name_of
     }
 };
 
-template <class T>
+template <class ... T>
 struct static_name_of;
 
 #endif
