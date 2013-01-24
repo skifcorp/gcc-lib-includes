@@ -27,6 +27,14 @@ namespace boost { namespace rdb { namespace sql {
   #define BOOST_RDB_OPERATOR_PRECEDENCE precedence_level::multiply
   #include "boost/rdb/sql/detail/arithmetic_operator.hpp"
 
+  
+  #define BOOST_RDB_OPERATOR %
+  #define BOOST_RDB_OPERATOR_STRING " % "
+  #define BOOST_RDB_OPERATOR_CLASS modulus
+  #define BOOST_RDB_OPERATOR_PRECEDENCE precedence_level::multiply
+  #include "boost/rdb/sql/detail/arithmetic_operator.hpp"
+  
+  
   #define BOOST_RDB_OPERATOR /
   #define BOOST_RDB_OPERATOR_STRING " / "
   #define BOOST_RDB_OPERATOR_CLASS divide

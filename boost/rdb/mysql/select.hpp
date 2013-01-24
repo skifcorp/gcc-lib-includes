@@ -13,6 +13,7 @@
 #include <fusion_tools/multy_join.h>
 
 
+#include <boost/type_traits.hpp>
 #include <type_traits>
 
 namespace boost { namespace rdb { namespace sql {
@@ -155,7 +156,7 @@ struct query_str<true>
 
     }
 };
-
+#if 0
 template <class Statement>
 struct select_invoker
 {
@@ -188,7 +189,7 @@ struct select_invoker
         return statement_(*args...);
     }
 };
-
+#endif
 struct deref_pointer
 {
     template <class T>
@@ -204,12 +205,26 @@ struct deref_pointer
     };
 
 
+    template <class T>
+    T deref_ptr(T && t, mpl::bool_<false>) const
+    {
+        return t;
+    }
+
+    template <class T>
+    auto deref_ptr(T && t, mpl::bool_<true>) const -> decltype(*t)
+    {
+        return *t;
+    }
 
     template <class Arg>
     typename result<deref_pointer(Arg)>::type operator()(Arg arg) const
     {
-        return *arg;
+        //static_name_of<typename result<deref_pointer(Arg)>::type> aaa;
+        //return *arg;
+        return deref_ptr( arg, typename boost::is_pointer<Arg>::type() );
     }
+
 };
 
 template <class State, class Data, class Subdialect>
@@ -320,16 +335,28 @@ struct select_statement<mysql, State, Data, Subdialect> : public select_statemen
     }
 
     template <class ... Args>
-    auto operator() ( const Args&... args  )->decltype( operator()( tools::multy_join( args... ) ) )
+    typename inherited::template transition<
+        typename Subdialect::exprs,
+        typename tools::result_of::as_vvector2 <
+            typename fusion::result_of::as_vector <
+                typename fusion::result_of::transform<
+                    typename tools::result_of::multy_join<Args ...>::type,
+                    deref_pointer
+                >::type
+            >::type
+        >::type
+    >::type operator() ( const Args&... args  )
     {
-        static_name_of<Args ...> aaa;
-
         return operator()( tools::multy_join( args... ) );
     }
 
+    template <class ... Args>
+    void where_cond( const fusion::vector< fusion::vector<Args, bool> ... >& cond)
+    {
+        static_name_of<decltype(cond)> ccc;
+    }
 
 
-    //using inherited::operator();
 };
 
 BOOST_RDB_ALLOW(mysql, mysql::as, mysql::from);
