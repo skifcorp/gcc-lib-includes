@@ -98,7 +98,7 @@ namespace boost { namespace rdb { namespace sql {
 
   inline void str(std::ostream& os, const ct::map_entry<sql2003::update, const Table*>& p) {
     os << "update ";
-    os << p.value->table();
+    p.value->str(os);
   }
 
   template<class AssignList>

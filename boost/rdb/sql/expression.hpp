@@ -5,6 +5,7 @@
 #define BOOST_RDB_EXPRESSION_HPP
 
 #include <boost/rdb/sql/common.hpp>
+#include <sstream>
 
 namespace boost { namespace rdb { namespace sql {
 
@@ -285,6 +286,40 @@ namespace boost { namespace rdb { namespace sql {
     };
   }
 
+  template <class T>
+  struct has_enabled {
+      template <typename T2 = T>
+      static auto func(T2* t) -> decltype(t->enabled, mpl::true_());
+      static mpl::false_ func(...);
+
+      static const bool value = boost::is_same< decltype(func( static_cast<T*>(nullptr))),  mpl::true_>::value;
+  };
+
+
+    template <class T, bool>
+    struct enabler {
+        static void setEnabled ( T &, bool ) {}
+        static bool enabled( const T &  ) {return true;}
+        static bool hasEnabledExprs ( const T&  ) {return true;}
+    };
+
+    template <class T>
+    struct enabler<T, true> {
+        static void setEnabled (T & t , bool v )
+        {
+            t.enabled = v;
+        }
+        static bool enabled(const T &  t)
+        {
+            return t.enabled;
+        }
+        static bool hasEnabledExprs( const T& e )
+        {
+            return e.hasEnabledExprs();
+        }
+    };
+
+
   template<class Expr1, class Expr2, int Precedence>
   struct binary_operation {
 
@@ -295,14 +330,26 @@ namespace boost { namespace rdb { namespace sql {
     Expr1 expr1_;
     Expr2 expr2_;
 
-    static void write(std::ostream& os, const Expr1& expr1, const char* op, const Expr2& expr2) {
-      write(os, expr1, boost::mpl::bool_<precedence_of<Expr1>::value < precedence>());
-      os << op;
-      write(os, expr2, boost::mpl::bool_<precedence_of<Expr2>::value < precedence>());
+    void write(std::ostream& os, const Expr1& expr1, const char* op, const Expr2& expr2) const {
+        if ( !hasEnabledExprs() )
+            return;
+
+        const bool all_enabled =
+                enabler<Expr1, has_enabled<Expr1>::value>::hasEnabledExprs( expr1 ) &&
+                enabler<Expr2, has_enabled<Expr2>::value>::hasEnabledExprs( expr2 );
+
+
+        if ( enabler<Expr1, has_enabled<Expr1>::value>::hasEnabledExprs( expr1 ) )
+            write(os, expr1, boost::mpl::bool_<precedence_of<Expr1>::value < precedence>());
+        if ( all_enabled )
+            os << op;
+        if ( enabler<Expr2, has_enabled<Expr2>::value>::hasEnabledExprs( expr2 ) )
+            write(os, expr2, boost::mpl::bool_<precedence_of<Expr2>::value < precedence>());
+
     }
 
     template<class Expr>
-    static void write(std::ostream& os, const Expr& expr, boost::mpl::true_) {
+    void write(std::ostream& os, const Expr& expr, boost::mpl::true_) const{
       os << "(";
       expr.str(os);
       os << ")";
@@ -312,6 +359,19 @@ namespace boost { namespace rdb { namespace sql {
     static void write(std::ostream& os, const Expr& expr, boost::mpl::false_) {
       expr.str(os);
     }
+
+    bool enabled = true;
+
+    bool hasEnabledExprs() const
+    {
+        if (!enabled )
+            return false;
+
+
+        return enabler<Expr1, has_enabled<Expr1>::value>::hasEnabledExprs(expr1_) ||
+                enabler<Expr2, has_enabled<Expr2>::value>::hasEnabledExprs(expr2_);
+    }
+
 
     //typedef typename mpl::if_<
     //  is_placeholder_mark<Expr1>,
@@ -351,12 +411,14 @@ namespace boost { namespace rdb { namespace sql {
     }
   };
 
+
+
   template<class Expr>
   struct expression : Expr {
       //expression<column>& operator=(const expression<c>&)  = delete;
 
     typedef expression this_type;
-    expression() { }
+    //expression() { }
     template<typename ... T> explicit expression(const T& ... arg) : Expr(arg...) { }
 
     const Expr& unwrap() const { return *this; }
@@ -400,7 +462,17 @@ namespace boost { namespace rdb { namespace sql {
     #define BOOST_PP_FILENAME_1       <boost/rdb/sql/detail/in_values.hpp>
     #include BOOST_PP_ITERATE()
 
-    using Expr::operator =; // for set col = value
+    using Expr::operator =; // for set col = value 
+
+
+
+    template <class T>
+    expression& if_(const T& en)
+    {
+        //enabler<expression, has_enabled<Expr>::value> e(*this, en);
+        this->enabled = en;
+        return *this;
+    }
   };
   
   struct null_expr {

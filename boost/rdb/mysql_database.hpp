@@ -96,7 +96,7 @@ namespace boost { namespace rdb { namespace mysql {
 
       static constexpr bool found = !boost::is_same< found_type, typename fusion::result_of::end<ExprList>::type >::value;
   };
-
+#if 0
     template <int CurPos, int SearchPos, class OldV, class NewV, class NewVal >
     OldV nullable_replace_imp( const OldV & , const NewV& new_seq, const NewVal&, mpl::bool_<true> )
     {
@@ -145,6 +145,7 @@ namespace boost { namespace rdb { namespace mysql {
 
     }
 
+#endif
 
   template<class Seq, class ExprList>
   struct nullable {      

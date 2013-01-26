@@ -350,11 +350,11 @@ struct select_statement<mysql, State, Data, Subdialect> : public select_statemen
         return operator()( tools::multy_join( args... ) );
     }
 
-    template <class ... Args>
-    void where_cond( const fusion::vector< fusion::vector<Args, bool> ... >& cond)
+    /*template <class ... Args>
+    void where_cond( const fusion::vector< Args ... >& cond)
     {
-        static_name_of<decltype(cond)> ccc;
-    }
+
+    }*/
 
 
 };

@@ -16,9 +16,9 @@ namespace tools {
 
 
     template <class ... Args>
-    typename result_of::make_vector<Args ...>::type make_vvector( Args && ... args )
+    typename result_of::make_vector<Args ...>::type make_vvector( const Args& ... args )
     {
-        return fusion::vector<Args ...>( std::forward<Args>(args)... );
+        return fusion::vector<Args ...>( args... );
     }
 }
 
