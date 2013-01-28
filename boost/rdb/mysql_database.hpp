@@ -14,6 +14,8 @@ namespace {
 
 using std::unique_ptr;
 
+
+
 #include <mysql_driver.h>
 #include <cppconn/statement.h>
 #include <cppconn/resultset.h>
@@ -21,6 +23,7 @@ using std::unique_ptr;
 
 
 #include <boost/rdb/core.hpp>
+#include <boost/rdb/core/datetime.hpp>
 #include <boost/rdb/dynamic.hpp>
 #include <boost/rdb/sql/alias.hpp>
 #include <boost/rdb/sql/table.hpp>
@@ -36,7 +39,8 @@ using std::unique_ptr;
 #include <boost/fusion/include/pair.hpp>
 #include <boost/fusion/include/iter_fold.hpp>
 #include <boost/fusion/include/for_each.hpp>
-
+#include <boost/fusion/include/erase.hpp>
+#include <boost/fusion/include/advance.hpp>
 
 #include <boost/mpl/bool.hpp>
 #include <boost/mpl/equal_to.hpp>
@@ -44,7 +48,8 @@ using std::unique_ptr;
 
 #include <boost/lexical_cast.hpp>
 
-#include "boost/date_time/posix_time/posix_time_types.hpp"
+#include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <deque>
 #include <stdexcept>
@@ -147,6 +152,28 @@ namespace boost { namespace rdb { namespace mysql {
 
 #endif
 
+    template <class Nullable>
+    struct nullable_setter
+    {
+        nullable_setter( Nullable& n ):nullabl(n){}
+
+        template <class Col, class CppTyp, class SqlTyp>
+        void operator()(const boost::rdb::sql::set_clause<Col, ::boost::rdb::core::literal<CppTyp, SqlTyp>>& s ) const
+        {            
+            nullabl.ref< boost::rdb::sql::expression<Col> >() = s.expr_.value_;
+            //static_name_of <Expr> asas;
+        }
+
+        template <class Col, class CppTyp>
+        void operator()(const boost::rdb::sql::set_clause<Col, ::boost::rdb::core::literal<CppTyp, ::boost::rdb::core::datetime>>& s ) const
+        {
+            nullabl.ref< boost::rdb::sql::expression<Col> >() =
+                    ::boost::posix_time::time_from_string(  s.expr_.value_ );
+        }
+
+        Nullable & nullabl;
+    };
+
   template<class Seq, class ExprList>
   struct nullable {      
     Seq values_;
@@ -162,11 +189,25 @@ namespace boost { namespace rdb { namespace mysql {
     template<int I> typename fusion::result_of::at_c<Seq, I>::type ref() {
       return fusion::at_c<I>(values_);
     }
+
+    template<class Key>
+    typename fusion::result_of::at<
+        Seq,
+        typename expr_pos<ExprList, Key>::type
+    >::type& ref()
+    {
+        static_assert(expr_pos<ExprList, Key>::found, "Cant find column in result!");
+
+        return fusion::at<typename expr_pos<ExprList, Key>::type>(values_);
+    }
+
     const Seq& values() const { return values_; }
     Seq& values() { return values_; }
     const status_vector_type& status() const { return status_; }
     status_vector_type& status() { return status_; }
     nullable& operator =(const Seq& values) { values_ = values; return *this; }
+
+
 
     template <class Expr>
     typename fusion::result_of::at<
@@ -195,6 +236,12 @@ namespace boost { namespace rdb { namespace mysql {
         return  fusion::at< typename expr_pos<ExprList, Expr>::type >( values_ );
     }
 
+    template <class ... Args>
+    void set( const fusion::vector<Args ...>& v )
+    {
+        fusion::for_each( v, nullable_setter< nullable<Seq, ExprList> >(*this) );
+    }
+
 
 
     template <int N>
@@ -203,6 +250,51 @@ namespace boost { namespace rdb { namespace mysql {
     using size = typename fusion::result_of::size<Seq>::type;
   };
 
+
+    template <class Seq, class ExprList, class Key>
+    nullable <
+        typename fusion::result_of::as_vector <
+            typename fusion::result_of::erase <
+                Seq,
+                typename fusion::result_of::advance<
+                    typename fusion::result_of::begin<Seq>::type,
+                    typename expr_pos<ExprList, Key>::type
+                >::type
+            >::type
+        >::type,
+        typename fusion::result_of::as_vector <
+            typename fusion::result_of::erase <
+                ExprList,
+                typename fusion::result_of::advance<
+                    typename fusion::result_of::begin<ExprList>::type,
+                    typename expr_pos<ExprList, Key>::type
+                >::type
+            >::type
+        >::type
+    >
+    erase_nullable( const nullable<Seq, ExprList>& nullab, const Key& )
+    {
+        static_assert(expr_pos<ExprList, Key>::found, "Cant find column in result!");
+
+        auto values = fusion::as_vector (
+                        fusion::erase( nullab.values_,
+                            fusion::advance<typename expr_pos<ExprList, Key>::type>(
+                                fusion::begin(nullab.values_))));
+
+        using keys = typename fusion::result_of::as_vector <
+                        typename fusion::result_of::erase <
+                            ExprList,
+                            typename fusion::result_of::advance<
+                                typename fusion::result_of::begin<ExprList>::type,
+                                typename expr_pos<ExprList, Key>::type
+                            >::type
+                        >::type
+                    >::type;
+
+        nullable< decltype(values), keys > ret;
+        ret.values_ = values;
+        return std::move(ret);
+    }
 
 
   template<class Row>

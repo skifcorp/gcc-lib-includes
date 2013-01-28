@@ -6,6 +6,7 @@
 
 #include <boost/rdb/sql/common.hpp>
 #include <boost/rdb/sql/expression.hpp>
+#include <fusion_tools/multy_join.h>
 
 namespace boost { namespace rdb { namespace sql {
 
@@ -81,10 +82,37 @@ namespace boost { namespace rdb { namespace sql {
       > type;
     };
 
-    #define BOOST_PP_ITERATION_LIMITS (1, BOOST_RDB_MAX_SIZE - 1)
+/*    #define BOOST_PP_ITERATION_LIMITS (1, BOOST_RDB_MAX_SIZE - 1)
     #define BOOST_PP_FILENAME_1       <boost/rdb/sql/detail/update_set.hpp>
-    #include BOOST_PP_ITERATE()
+    #include BOOST_PP_ITERATE()*/
+
+    template <class ... Args>
+    typename transition<
+        typename Subdialect::set,
+        fusion::vector <
+            Args ...
+        >
+    >::type set( const fusion::vector<Args ...>& v)
+    {
+        return
+        typename transition <
+            typename Subdialect::set,
+            fusion::vector <
+                Args ...
+            >
+        >::type(ct::add_key<typename Subdialect::set>(data_, v) );
+    }
     
+    template <class ... Args>
+    typename transition<
+        typename Subdialect::set,
+        typename tools::result_of::multy_join<Args...>::type
+    >::type
+    set( const Args& ... args)
+    {
+        return set( tools::multy_join(args...)  );
+    }
+
     #include "detail/select_where.hpp"
 
     void str(std::ostream& os) const {
