@@ -175,7 +175,9 @@ namespace boost { namespace rdb { namespace mysql {
     };
 
   template<class Seq, class ExprList>
-  struct nullable {      
+  struct nullable {
+      using expr_list = ExprList;
+
     Seq values_;
     typedef std::bitset<fusion::result_of::size<Seq>::value> status_vector_type;
     typedef Seq value_vector_type;

@@ -12,7 +12,7 @@ namespace boost { namespace rdb { namespace sql {
   template<class Table>
   inline void str(std::ostream& os, const ct::map_entry<sql2003::insert, const Table*>& p) {
     os << "insert into ";
-    os << p.value->table();
+    p.value->str(os);
   }
 
   template<class ColList>
