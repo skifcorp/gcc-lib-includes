@@ -205,7 +205,7 @@ namespace boost { namespace rdb { namespace sql {
 
   #define BOOST_RDB_END_TABLE(NAME)  \
     column_members; \
-    using column_pointers_type = typename tools::result_of::as_vvector2< \
+    using column_pointers_type = typename ::tools::result_of::as_vvector2< \
                                         typename mpl::transform< \
                                             column_members, \
                                             ::boost::rdb::sql::detail::detect_column_type_from_column_member \

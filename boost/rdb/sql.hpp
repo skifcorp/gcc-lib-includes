@@ -10,4 +10,5 @@
 #include <boost/rdb/sql/functions.hpp>
 #include <boost/rdb/sql/alias.hpp>
 
+
 #endif // BOOST_RDB_SQL_HPP

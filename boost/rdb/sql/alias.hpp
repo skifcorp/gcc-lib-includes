@@ -23,11 +23,23 @@ struct sql_column_alias
     sql_column_alias(Args ... ) {}
 };
 
+
+template <class ... Expr>
+struct unroll_expr;
+
+template <>
+struct unroll_expr<>
+{
+    using type =  void;
+};
+
+
 template <class Expr>
-struct unroll_expr
+struct unroll_expr<Expr>
 {
     using type =  Expr;
 };
+
 
 template <class Expr, class Name>
 struct unroll_expr< sql_column_alias<Expr, Name> >
@@ -35,10 +47,10 @@ struct unroll_expr< sql_column_alias<Expr, Name> >
     using type = typename unroll_expr<Expr>::type;
 };
 
-template<class Name, class Expr >
-constexpr sql_column_alias< typename unroll_expr<Expr>::type, Name> alias( const Expr & e  )
+template<class Name, class ... Expr >
+constexpr sql_column_alias< typename unroll_expr<Expr...>::type, Name> alias( const Expr & ... e  )
 { 
-    return sql_column_alias< typename unroll_expr<Expr>::type, Name>(e);
+    return sql_column_alias< typename unroll_expr<Expr...>::type, Name>(e...);
 }
 
 }}}
