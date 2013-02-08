@@ -281,6 +281,20 @@ sql_function_greatest<Expr...> greatest(Expr ... e)
     return sql_function_greatest<Expr...>(e...);
 }
 
+
+template <class ... Expr>
+using sql_function_last_insert_id = expression< sql_function<_S("last_insert_id"), core::integer, Expr ...> >;
+
+
+template <class ... Expr>
+sql_function_last_insert_id<Expr...> last_insert_id( Expr ... e)
+{
+    static_assert( sizeof...(e) == 0, "You cant pass arguments to last_insert_id()" );
+
+    return sql_function_last_insert_id<Expr...>(e...);
+}
+
+
 #undef _S
 
 }}}

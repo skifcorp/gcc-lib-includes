@@ -55,11 +55,11 @@ public:
   }
 
   template<class T>
-  void* apply(void* address, std::size_t n
+  void* apply(void* address, std::size_t nn
       BOOST_APPEND_EXPLICIT_TEMPLATE_TYPE(T)) const
   {
     for(char* next = address = this->BOOST_NESTED_TEMPLATE apply<T>(address);
-        !! --n;)
+        !! --nn;)
       this->BOOST_NESTED_TEMPLATE apply<T>(next = next+sizeof(T));
     return address; 
   }

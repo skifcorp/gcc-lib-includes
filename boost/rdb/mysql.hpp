@@ -26,6 +26,7 @@ using sql::count;
 using sql::floor;
 using sql::avg;
 using sql::greatest;
+using sql::last_insert_id;
 
 using sql::alias;
 using sql::exprs;

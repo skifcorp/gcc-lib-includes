@@ -131,6 +131,7 @@ namespace boost { namespace rdb { namespace sql {
     struct cols;
     struct values;
     struct set;
+    struct last_insert_id;
   };
   
   template<class Dialect, class State, class Data, class Subdialect>

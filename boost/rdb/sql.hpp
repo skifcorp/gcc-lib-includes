@@ -9,6 +9,7 @@
 #include <boost/rdb/sql/delete.hpp>
 #include <boost/rdb/sql/functions.hpp>
 #include <boost/rdb/sql/alias.hpp>
+#include <boost/rdb/sql/concat.hpp>
 
 
 #endif // BOOST_RDB_SQL_HPP

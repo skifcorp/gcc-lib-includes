@@ -44,6 +44,7 @@ namespace boost { namespace rdb { namespace core {
 
   struct statement_tag { };
   struct insert_statement_tag : statement_tag { };
+  struct insert_tabular_statement_tag : statement_tag { };
   struct tabular_result_tag : statement_tag { };
   struct update_statement_tag : statement_tag { };
 

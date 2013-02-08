@@ -35,7 +35,13 @@ namespace boost { namespace rdb { namespace sql {
     fusion::for_each(p.value, detail::comma_output(os));
   }
 
-  template<class Data, class HasValues, class HasSelect, class Subdialect>
+    template <class Lit>
+    inline void str(std::ostream& os, const ct::map_entry<sql2003::last_insert_id, fusion::vector<Lit> >& ) {
+        os << "; select last_insert_id() ";
+    }
+
+
+  template<class Data, class HasValues, class HasSelect, class Subdialect, class Tag >
   struct insert_impl {
     insert_impl(const Data& data) : data_(data) { }
     Data data_;
@@ -86,9 +92,10 @@ namespace boost { namespace rdb { namespace sql {
     }
   };
 
-  template<class Data, class Subdialect>
-  struct insert_impl<Data, mpl::true_, mpl::false_, Subdialect> {
-    typedef core::insert_statement_tag tag;
+  template<class Data, class Subdialect, class Tag>
+  struct insert_impl<Data, mpl::true_, mpl::false_, Subdialect, Tag> {
+    //typedef core::insert_statement_tag tag;
+      using tag = Tag;
     typedef typename ct::result_of::value_at_key<Data, typename Subdialect::cols>::type cols_type;
     typedef typename ct::result_of::value_at_key<Data, typename Subdialect::values>::type values_type;
 
@@ -118,39 +125,62 @@ namespace boost { namespace rdb { namespace sql {
 
   };
 
-  template<class Data, class Subdialect>
-  struct insert_impl<Data, mpl::false_, mpl::true_, Subdialect> {
-    typedef core::insert_statement_tag tag;
+  template<class Data, class Subdialect, class Tag>
+  struct insert_impl<Data, mpl::false_, mpl::true_, Subdialect, Tag> {
+    //typedef core::insert_statement_tag tag;
+      using tag = Tag;
     typedef typename result_of::placeholders_from_map<Data>::type placeholder_vector;
     insert_impl(const Data& data) : data_(data) { }
     Data data_;
     typedef insert_impl inherited;
   };
 
-  template<class Dialect, class State, class Data, class Subdialect>
+  template<class Dialect, class State, class Data, class Subdialect, class Tag>
   struct insert_statement : insert_impl<Data,
     typename ct::result_of::has_key<Data, typename Subdialect::values>::type,
     typename ct::result_of::has_key<Data, typename Subdialect::insert_select>::type,
-    Subdialect
+    Subdialect, Tag
   > {
+
+
 
     explicit insert_statement(const Data& data) : insert_impl<Data,
       typename ct::result_of::has_key<Data, typename Subdialect::values>::type,
       typename ct::result_of::has_key<Data, typename Subdialect::insert_select>::type,
-      Subdialect
+      Subdialect, Tag
     >(data) { }
 
     typedef void result;
 
-    template<class K, class T, class D = Data>
+    template<class K, class T, class TrTag = Tag, class D = Data>
     struct transition {
       typedef insert_statement<
         Subdialect,
         K,
         ct::map<K, T, D>,
-        Subdialect
+        Subdialect,
+        TrTag
       > type;
     };
+
+    using last_insert_id_expr = expression< core::literal<int, core::integer> >;
+
+    typename transition <
+        typename Subdialect::last_insert_id,
+        fusion::vector < last_insert_id_expr >,
+        core::insert_tabular_statement_tag
+    >::type select_last_insert_id() const
+    {
+
+
+        return typename transition <
+            typename Subdialect::last_insert_id,
+            fusion::vector<last_insert_id_expr>,
+            core::insert_tabular_statement_tag
+        >::type(
+            ct::add_key<typename Subdialect::last_insert_id>(
+                        this->data_, fusion::vector<last_insert_id_expr>( last_insert_id_expr(0) ) ) );
+    }
 
     #define BOOST_PP_ITERATION_LIMITS (1, BOOST_RDB_MAX_SIZE - 1)
     #define BOOST_PP_FILENAME_1       <boost/rdb/sql/detail/insert_cols.hpp>
@@ -230,6 +260,8 @@ namespace boost { namespace rdb { namespace sql {
         return type(ct::add_key<typename Subdialect::values>(
           data, fusion::as_vector(final_value_list::make(fusion::begin(exprs)))));
       }
+
+
     };
 
     #define BOOST_PP_ITERATION_LIMITS (1, BOOST_RDB_MAX_SIZE - 1)
@@ -261,6 +293,14 @@ namespace boost { namespace rdb { namespace sql {
 
   };
   
+  template<class Dialect, class State, class Data, class Subdialect>
+  typename ct::result_of::value_at_key<Data, sql::sql2003::last_insert_id>::type data_expr(
+            const insert_statement<Dialect, State, Data, Subdialect, core::insert_tabular_statement_tag >& ins
+          )
+  {
+      return ct::at_key<sql::sql2003::last_insert_id>( ins.data_ );
+  }
+
   BOOST_RDB_ALLOW(sql2003, cols, insert_select);
   BOOST_RDB_ALLOW(sql2003, insert_select, from);
   BOOST_RDB_ALLOW(sql2003, insert_select, distinct);
@@ -271,17 +311,31 @@ namespace boost { namespace rdb { namespace sql {
     sql2003,
     sql2003::insert,
     ct::map<sql2003::insert, const Table*>,
-    sql2003
+    sql2003,
+    core::insert_statement_tag
   >
   insert_into(const Table& table) {
     return insert_statement<
       sql2003,
       sql2003::insert,
       ct::map<sql2003::insert, const Table*>,
-      sql2003
+      sql2003,
+      core::insert_statement_tag
     >(ct::map<sql2003::insert, const Table*>(&table));
   }
 
 } } }
+
+
+
+namespace boost { namespace rdb { namespace core {
+
+  template<class Dialect, class State, class Data, class Subdialect>
+  struct statement_result_type< sql::insert_statement<Dialect, State, Data, Subdialect, core::insert_tabular_statement_tag> > {
+    typedef typename ct::result_of::value_at_key<Data, sql::sql2003::last_insert_id>::type type;
+  };
+
+} } }
+
 
 #endif

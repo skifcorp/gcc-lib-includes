@@ -350,11 +350,7 @@ struct select_statement<mysql, State, Data, Subdialect> : public select_statemen
         return operator()( tools::multy_join( args... ) );
     }
 
-    /*template <class ... Args>
-    void where_cond( const fusion::vector< Args ... >& cond)
-    {
 
-    }*/
 
 
 };

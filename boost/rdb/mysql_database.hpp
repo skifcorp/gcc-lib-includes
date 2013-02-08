@@ -27,6 +27,7 @@ using std::unique_ptr;
 #include <boost/rdb/dynamic.hpp>
 #include <boost/rdb/sql/alias.hpp>
 #include <boost/rdb/sql/table.hpp>
+#include <boost/rdb/sql.hpp>
 
 #include <boost/fusion/include/make_vector.hpp>
 #include <boost/fusion/include/at_c.hpp>
@@ -780,6 +781,35 @@ namespace boost { namespace rdb { namespace mysql {
         //sql_check(SQL_HANDLE_DBC, db.hdbc_, SQLAllocStmt(db.hdbc_, &hstmt));
         db.prepare_str(stmt, as_string(select));
         return prepare_return_type(select, stmt);
+      }
+    };
+
+
+
+    template<class Insert>
+    struct discriminate<core::insert_tabular_statement_tag, Insert> {
+
+      typedef result_set<typename core::statement_result_type<Insert>::type, false> execute_return_type;
+
+      static execute_return_type execute(mysql_database& db, const Insert& ins) {
+          statement_typ stmt;
+        try {
+          db.exec_str(stmt, as_string(ins));
+          return execute_return_type( std::move(stmt), data_expr(ins) );
+        }
+        catch( ... ) {
+            throw;
+        }
+      }
+
+      typedef prepared_select_statement<Insert> prepare_return_type;
+
+      static prepare_return_type prepare(mysql_database& db, const Insert& ins) {
+        //HSTMT hstmt;
+        statement_typ stmt;
+        //sql_check(SQL_HANDLE_DBC, db.hdbc_, SQLAllocStmt(db.hdbc_, &hstmt));
+        db.prepare_str(stmt, as_string(ins));
+        return prepare_return_type(ins, stmt);
       }
     };
 
