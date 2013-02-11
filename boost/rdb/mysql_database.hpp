@@ -1153,6 +1153,21 @@ namespace boost { namespace rdb { namespace mysql {
         return *this;
     }*/
 
+    result_set<ExprList, Own>& next()
+    {
+        if ( stmt_ ) {
+
+            if (!stmt_->getMoreResults())
+                throw std::runtime_error( "No more results!!!!" );
+
+            result_.reset( stmt_->getResultSet() );
+        }
+        else {
+            throw std::runtime_error( "Statement is null!!!" );
+        }
+        return *this;
+    }
+
     void bind() {
 
       //if (!bound_) {

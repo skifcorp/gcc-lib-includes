@@ -37,7 +37,7 @@ namespace boost { namespace rdb { namespace sql {
 
     template <class Lit>
     inline void str(std::ostream& os, const ct::map_entry<sql2003::last_insert_id, fusion::vector<Lit> >& ) {
-        os << "; select last_insert_id() ";
+        os << "; select last_insert_id();";
     }
 
 
@@ -333,6 +333,8 @@ namespace boost { namespace rdb { namespace core {
   template<class Dialect, class State, class Data, class Subdialect>
   struct statement_result_type< sql::insert_statement<Dialect, State, Data, Subdialect, core::insert_tabular_statement_tag> > {
     typedef typename ct::result_of::value_at_key<Data, sql::sql2003::last_insert_id>::type type;
+
+
   };
 
 } } }
