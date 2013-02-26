@@ -166,11 +166,11 @@ namespace boost { namespace rdb { namespace sql {
     fusion::for_each(p.value, detail::comma_output(os));
   }
 
-  inline void str(std::ostream& os, const ct::map_entry<sql2003::distinct, int>& p) {
+  inline void str(std::ostream& os, const ct::map_entry<sql2003::distinct, int>& ) {
     os << " distinct";
   }
 
-  inline void str(std::ostream& os, const ct::map_entry<sql2003::all, int>& p) {
+  inline void str(std::ostream& os, const ct::map_entry<sql2003::all, int>& ) {
     os << " all";
   }
 

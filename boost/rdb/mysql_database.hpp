@@ -175,9 +175,58 @@ namespace boost { namespace rdb { namespace mysql {
         Nullable & nullabl;
     };
 
-  template<class Seq, class ExprList>
-  struct nullable {
-      using expr_list = ExprList;
+    template <bool IsCopy>
+    struct constr_disp;
+
+
+    template <>
+    struct constr_disp<true>
+    {
+        template <class N, class ... Args>
+        static void call( N& n, Args ... args )
+        {
+            n.copyValues(std::forward<Args>(args)...);
+        }
+    };
+
+    template <>
+    struct constr_disp<false>
+    {
+        template <class N, class ... Args>
+        static void call( N& n, Args ... args )
+        {
+            n.makeValues(std::forward<Args>(args)...);
+        }
+    };
+
+template<class Seq, class ExprList>
+struct nullable {
+    using expr_list = ExprList;
+
+    nullable()
+    {}
+
+    template <class Arg, class ... Args>
+    nullable( Arg arg, Args&& ...  args )
+    {
+        constr_disp< std::is_same<typename std::remove_reference<Arg>::type,
+                nullable<Seq, ExprList> >::value >::call(*this, arg, args...);
+    }
+
+      //template <class SeqCpy, class ExprListCpy>
+
+    template <class ... Args>
+    void makeValues(Args && ... args)
+    {
+        values_ = fusion::make_vector( std::forward<Args>(args)...);
+    }
+
+
+    void copyValues(const nullable<Seq, ExprList>& other)
+    {
+        values_ = other.values_;
+    }
+
 
     Seq values_;
     typedef std::bitset<fusion::result_of::size<Seq>::value> status_vector_type;
@@ -451,7 +500,7 @@ namespace boost { namespace rdb { namespace mysql {
         var = result_->getDouble(i);
       }
 
-      static void parameter(statement_typ & stmt, int i, float_& var) {
+      static void parameter(statement_typ & , int , float_& ) {
 //        sql_check(SQL_HANDLE_STMT, hstmt, SQLBindParameter(hstmt, i, SQL_PARAM_INPUT, SQL_C_DOUBLE, SQL_DOUBLE, 0, 0,
 //          (SQLPOINTER) &var.value_, 0, (SQLINTEGER*) &var.length_));
       }

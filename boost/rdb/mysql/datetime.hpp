@@ -69,7 +69,7 @@ namespace boost { namespace rdb { namespace mysql {
           var.value() = *std::gmtime( &t );
       }
     
-      static void parameter(result_set_typ& result_, int i, datetime& var) {
+      static void parameter(result_set_typ& , int , datetime&) {
       }
     };
   }

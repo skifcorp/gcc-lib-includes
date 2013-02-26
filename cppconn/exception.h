@@ -43,17 +43,17 @@ namespace sql
 	void* operator new(size_t N, std::allocator<Class>&);
 
 #ifdef _WIN32
-#pragma warning (disable : 4290)
+//#pragma warning (disable : 4290)
 //warning C4290: C++ exception specification ignored except to indicate a function is not __declspec(nothrow)
 
 
-#pragma warning(push)
-#pragma warning(disable: 4275)
+//#pragma warning(push)
+//#pragma warning(disable: 4275)
 #endif
 class CPPCONN_PUBLIC_FUNC SQLException : public std::runtime_error
 {
 #ifdef _WIN32
-#pragma warning(pop)
+//#pragma warning(pop)
 #endif
 protected:
 	const std::string sql_state;

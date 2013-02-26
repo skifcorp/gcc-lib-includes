@@ -35,7 +35,7 @@ namespace sql
 {
 
 #ifdef _WIN32
-#pragma warning (disable : 4290)
+//#pragma warning (disable : 4290)
 //warning C4290: C++ exception specification ignored except to indicate a function is not __declspec(nothrow)
 #endif
 
@@ -59,7 +59,7 @@ protected:
 
 	virtual ~SQLWarning(){};
 
-	SQLWarning(const SQLWarning& e){};
+    SQLWarning(const SQLWarning& ){};
 
 private:
 	const SQLWarning & operator = (const SQLWarning & rhs);
