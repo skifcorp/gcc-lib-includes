@@ -6,6 +6,8 @@
 #include <boost/rdb/mysql/select.hpp>
 #include <boost/rdb/sql/update.hpp>
 #include <boost/rdb/sql/insert.hpp>
+#include <boost/rdb/sql/database.hpp>
+#include <boost/rdb/sql/table.hpp>
 
 namespace boost { namespace rdb { namespace mysql {
 
@@ -18,6 +20,8 @@ extern mysql_select_statement_type select;
 
 using sql::update;
 using sql::insert_into;
+using sql::create_database;
+using sql::create_table;
 
 using sql::max;
 using sql::min;

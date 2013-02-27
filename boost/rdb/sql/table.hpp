@@ -160,6 +160,13 @@ namespace boost { namespace rdb { namespace sql {
 
         // following function name chosen because it won't conflict with column names :-P
         static const char* table() { return Base::name(); }
+
+        void str(std::ostream& os) const {
+            if (has_alias())
+                os << alias_;
+            else
+                os << Base::name();
+        }
     };
 
 
@@ -273,16 +280,26 @@ namespace boost { namespace rdb { namespace sql {
     typedef create_table_statement_tag tag;
     typedef void result;
     void str(std::ostream& os) const {
-      os << "create table " << Table::table() << "(";
+      //os << "create table if not exists " << Table::table() << "(";
+        std::stringstream sss;
+        table.str(sss);
+        std::cout << "create table!!! " << sss.str() << std::endl;
+
+        os << "create table if not exists ";
+        table.str(os);
+        os<< " (";
       boost::mpl::for_each<typename Table::column_members>(table_column_output<Table>(os, Table::_));
       os << ")";
     }
     std::string str() const { return as_string(*this); }
+
+    create_table_statement(const Table& t ):table(t) {}
+    const Table & table;
   };
 
   template<class Table>
-  create_table_statement<Table> create_table(const Table&) {
-    return create_table_statement<Table>();
+  create_table_statement<Table> create_table(const Table& t) {
+    return create_table_statement<Table>(t);
   }
 
   struct drop_table_statement_tag : core::statement_tag { };

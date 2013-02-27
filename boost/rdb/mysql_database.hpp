@@ -755,16 +755,16 @@ namespace boost { namespace rdb { namespace mysql {
 
 
 
-    mysql_database(const std::string& h, const std::string& db, const std::string& u, const std::string& p) {
-      open(h, db, u, p);
+    mysql_database(const std::string& h, const std::string& u, const std::string& p) {
+      open(h, u, p);
     }
 
-    void open(const std::string& h, const std::string& db, const std::string& u, const std::string& p);
+    void open(const std::string& h, const std::string& u, const std::string& p);
     void open();
     void close();
 
     void setHost(const std::string& h){host_ = h;}
-    void setDatabase(const std::string& db){database_ = db;}
+    void setDatabase(const std::string& db);//{database_ = db;}
     void setUser(const std::string& u){user_ = u;}
     void setPassword(const std::string& p){password_ = p;}
 

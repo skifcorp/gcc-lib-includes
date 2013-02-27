@@ -10,6 +10,6 @@
 #include <boost/rdb/sql/functions.hpp>
 #include <boost/rdb/sql/alias.hpp>
 #include <boost/rdb/sql/concat.hpp>
-
+#include <boost/rdb/sql/database.hpp>
 
 #endif // BOOST_RDB_SQL_HPP
