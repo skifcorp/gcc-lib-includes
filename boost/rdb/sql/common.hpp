@@ -130,6 +130,7 @@ namespace boost { namespace rdb { namespace sql {
     struct update;
     struct cols;
     struct values;
+    struct multiply_values;
     struct set;
     struct last_insert_id;
   };

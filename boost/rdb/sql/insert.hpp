@@ -6,8 +6,13 @@
 
 #include <boost/rdb/sql/common.hpp>
 #include <boost/rdb/sql/expression.hpp>
+#include <boost/rdb/nullable.hpp>
+
+#include <vector>
 
 namespace boost { namespace rdb { namespace sql {
+
+
 
   template<class Table>
   inline void str(std::ostream& os, const ct::map_entry<sql2003::insert, const Table*>& p) {
@@ -25,9 +30,21 @@ namespace boost { namespace rdb { namespace sql {
   template<class ValueList>
   inline void str(std::ostream& os, const ct::map_entry<sql2003::values, ValueList>& p) {
     os << " values (";
+
     fusion::for_each(p.value, detail::comma_output(os));
     os << ")";
   }
+
+    template <template <class> class Cont, template <class, class> class Nullable, class Seq, class ExprList>
+    inline void str( std::ostream& os,  const ct::map_entry<sql2003::multiply_values, Cont< Nullable<Seq, ExprList>>>& m) {
+        os << " values ";
+
+        for ( const auto & v : m.value ) {
+            os << " (";
+            ::boost::fusion::for_each( v.values_ , detail::comma_output(os) );
+            os  << ")";
+        }
+    }
 
   template<class ExprList>
   inline void str(std::ostream& os, const ct::map_entry<sql2003::insert_select, ExprList>& p) {
@@ -260,13 +277,20 @@ namespace boost { namespace rdb { namespace sql {
         return type(ct::add_key<typename Subdialect::values>(
           data, fusion::as_vector(final_value_list::make(fusion::begin(exprs)))));
       }
-
-
     };
 
-    #define BOOST_PP_ITERATION_LIMITS (1, BOOST_RDB_MAX_SIZE - 1)
-    #define BOOST_PP_FILENAME_1       <boost/rdb/sql/detail/insert_values.hpp>
-    #include BOOST_PP_ITERATE()
+
+    //#define BOOST_PP_ITERATION_LIMITS (1, BOOST_RDB_MAX_SIZE - 1)
+    //#define BOOST_PP_FILENAME_1       <boost/rdb/sql/detail/insert_values.hpp>
+    //#include BOOST_PP_ITERATE()
+
+    template<class ... Expr>
+    auto values(const Expr& ... expr) {
+        return with_values<
+            typename fusion::result_of::make_vector<Expr ...>::type
+        >::make(this->data_, fusion::make_vector(expr...));
+    }
+
 
     #define BOOST_PP_ITERATION_LIMITS (1, BOOST_RDB_MAX_SIZE - 1)
     #define BOOST_PP_FILENAME_1       <boost/rdb/sql/detail/insert_select.hpp>
@@ -287,8 +311,15 @@ namespace boost { namespace rdb { namespace sql {
     #include <boost/rdb/sql/detail/select_where.hpp>
 
     void str(std::ostream& os) const {
-      ct::for_each(this->data_, str_clause(os));
-      //this->data_.for_each(str_clause(os));
+        ct::for_each(this->data_, str_clause(os));
+    }
+
+    template <class Seq, class ExprList>
+    auto values( std::vector<boost::rdb::mysql::nullable<Seq, ExprList>>& v )
+    {
+        return typename transition<typename Subdialect::multiply_values,
+            std::vector<boost::rdb::mysql::nullable<Seq, ExprList>> >::type(
+                ct::add_key< typename Subdialect::multiply_values >( this->data_, v ) );
     }
 
   };

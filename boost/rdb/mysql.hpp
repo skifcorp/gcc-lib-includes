@@ -8,6 +8,7 @@
 #include <boost/rdb/sql/insert.hpp>
 #include <boost/rdb/sql/database.hpp>
 #include <boost/rdb/sql/table.hpp>
+#include <boost/rdb/sql/verbatim.hpp>
 
 namespace boost { namespace rdb { namespace mysql {
 
@@ -22,6 +23,7 @@ using sql::update;
 using sql::insert_into;
 using sql::create_database;
 using sql::create_table;
+using sql::verbatim;
 
 using sql::max;
 using sql::min;
