@@ -8,6 +8,8 @@
 #include <boost/rdb/sql/expression.hpp>
 #include <boost/rdb/nullable.hpp>
 
+#include <boost/date_time/posix_time/ptime.hpp>
+
 #include <vector>
 
 namespace boost { namespace rdb { namespace sql {
@@ -34,14 +36,52 @@ namespace boost { namespace rdb { namespace sql {
     fusion::for_each(p.value, detail::comma_output(os));
     os << ")";
   }
+    struct non_literal_class_comma_output
+    {
+        non_literal_class_comma_output( std::ostream & os ) : os_(os)
+        {
 
-    template <template <class> class Cont, template <class, class> class Nullable, class Seq, class ExprList>
-    inline void str( std::ostream& os,  const ct::map_entry<sql2003::multiply_values, Cont< Nullable<Seq, ExprList>>>& m) {
+        }
+
+        mutable const char * comma_ = "";
+
+        std::ostream & item() const
+        {
+            os_ << comma_;
+            comma_ = ", ";
+            return os_;
+        }
+
+        template <class T>
+        void operator() ( T & t ) const
+        {
+            item() << t;
+        }
+
+        void operator() (const ::boost::posix_time::ptime & t ) const
+        {
+            item() << "'" << ::boost::rdb::core::ptime_to_string(t) <<"'";
+        }
+
+        void operator() (const std::string & s ) const
+        {
+            item() << "'" << s <<"'";
+        }
+
+        std::ostream& os_;
+    };
+
+    template <class Seq, class ExprList>
+    inline void str( std::ostream& os,  const ct::map_entry<sql2003::multiply_values,
+                     std::vector< boost::rdb::mysql::nullable<Seq, ExprList>>>& m) {
         os << " values ";
 
+        const char * comma_ = "";
+
         for ( const auto & v : m.value ) {
+            os << comma_; comma_ = ", ";
             os << " (";
-            ::boost::fusion::for_each( v.values_ , detail::comma_output(os) );
+            ::boost::fusion::for_each( v.values_ , non_literal_class_comma_output(os) );
             os  << ")";
         }
     }
@@ -58,11 +98,13 @@ namespace boost { namespace rdb { namespace sql {
     }
 
 
-  template<class Data, class HasValues, class HasSelect, class Subdialect, class Tag >
-  struct insert_impl {
-    insert_impl(const Data& data) : data_(data) { }
-    Data data_;
-  };
+    template<class Data, class HasValues, class HasSelect, class Subdialect, class Tag >
+    struct insert_impl {
+        using tag = Tag;
+
+        insert_impl(const Data& data) : data_(data) { }
+        Data data_;
+    };
   
   namespace result_of {
 
@@ -315,7 +357,7 @@ namespace boost { namespace rdb { namespace sql {
     }
 
     template <class Seq, class ExprList>
-    auto values( std::vector<boost::rdb::mysql::nullable<Seq, ExprList>>& v )
+    auto values(const std::vector<boost::rdb::mysql::nullable<Seq, ExprList>>& v )
     {
         return typename transition<typename Subdialect::multiply_values,
             std::vector<boost::rdb::mysql::nullable<Seq, ExprList>> >::type(

@@ -16,6 +16,18 @@
 namespace boost { namespace rdb { namespace core {
     const std::string mysql_date_time_format = "%Y-%m-%d %H:%M:%S";
 
+    inline std::string ptime_to_string( const ::boost::posix_time::ptime& t )
+    {
+        std::stringstream ss;
+
+        std::locale l( std::locale(), new ::boost::posix_time::time_facet(mysql_date_time_format.c_str()) );
+
+        ss.imbue(l);
+
+        ss << t;
+
+        return ss.str();
+    }
 
     struct datetime {
         BOOST_STATIC_CONSTANT(int, id = 6);
@@ -41,15 +53,7 @@ namespace boost { namespace rdb { namespace core {
         typedef literal<std::string, datetime> type;
         static type value(const ::boost::posix_time::ptime& val)
         {
-            std::stringstream ss;
-
-            std::locale l( std::locale(), new ::boost::posix_time::time_facet(mysql_date_time_format.c_str()) );
-
-            ss.imbue(l);
-
-            ss << val;
-
-            return ss.str();
+            return ptime_to_string(val);
         }
     };
 

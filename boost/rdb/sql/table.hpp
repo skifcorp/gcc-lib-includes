@@ -280,11 +280,8 @@ namespace boost { namespace rdb { namespace sql {
     typedef create_table_statement_tag tag;
     typedef void result;
     void str(std::ostream& os) const {
-      //os << "create table if not exists " << Table::table() << "(";
         std::stringstream sss;
-        table.str(sss);
-        std::cout << "create table!!! " << sss.str() << std::endl;
-
+        table.str(sss);        
         os << "create table if not exists ";
         table.str(os);
         os<< " (";

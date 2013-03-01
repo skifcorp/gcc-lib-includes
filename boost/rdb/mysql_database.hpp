@@ -21,7 +21,7 @@ using std::unique_ptr;
 #include <cppconn/resultset.h>
 #include <cppconn/exception.h>
 
-#include "nullable.hpp"
+#include <boost/rdb/nullable.hpp>
 
 #include <boost/rdb/core.hpp>
 #include <boost/rdb/core/datetime.hpp>
