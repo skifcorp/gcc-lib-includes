@@ -40,6 +40,10 @@ namespace archive {
 //////////////////////////////////////////////////////////////////////
 // exceptions thrown by archives
 //
+
+#define saved_exception_code exception_code
+#undef exception_code
+
 class BOOST_ARCHIVE_DECL(BOOST_PP_EMPTY()) archive_exception : 
     public virtual std::exception
 {
@@ -90,6 +94,10 @@ protected:
     append(unsigned int l, const char * a);
     archive_exception();
 };
+
+
+#define exception_code saved_exception_code
+#undef saved_exception_code
 
 }// namespace archive
 }// namespace boost
