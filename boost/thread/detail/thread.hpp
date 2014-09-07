@@ -451,7 +451,7 @@ namespace boost
             thread_info.swap(x.thread_info);
         }
 
-        class BOOST_SYMBOL_VISIBLE id;
+        class id;
 #ifdef BOOST_THREAD_PLATFORM_PTHREAD
         inline id get_id()  const BOOST_NOEXCEPT;
 #else
@@ -725,7 +725,7 @@ namespace boost
         return const_cast<thread*>(this)->native_handle();
     #else
         detail::thread_data_ptr const local_thread_info=(get_thread_info)();
-        return (local_thread_info? id(local_thread_info) id());
+        return (local_thread_info? id(local_thread_info) : id());
     #endif
     }
 
@@ -767,7 +767,7 @@ namespace boost
         else
         {
           BOOST_THREAD_THROW_ELSE_RETURN(
-            thread_resource_error(system::errc::invalid_argument, "boost thread: thread not joinable"),
+            (thread_resource_error(system::errc::invalid_argument, "boost thread: thread not joinable")),
             false
           );
         }
